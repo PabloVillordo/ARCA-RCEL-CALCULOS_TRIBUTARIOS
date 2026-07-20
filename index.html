@@ -76,7 +76,6 @@
         /* Dashboard Principal (Con Formato) */
         .dashboard-grid {
             display: none; 
-            /* Se ajusta el minmax a 160px para que entren las 7 tarjetas bien distribuidas */
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 1.2rem;
             margin-bottom: 1rem;
@@ -117,7 +116,7 @@
             background-color: rgba(16, 185, 129, 0.1);
             padding: 0.3rem;
             border-radius: 6px;
-            user-select: all; /* 1 clic selecciona todo */
+            user-select: all; 
             cursor: copy;
             display: inline-block;
         }
@@ -207,7 +206,7 @@
             <div class="value" id="kpi-base-tasa">$0,00</div>
         </div>
         <div class="card">
-            <h3>Imp. Tasa MP (10%)</h3>
+            <h3>Imp. Tasa MP (1%)</h3>
             <div class="value impuesto" id="kpi-imp-tasa">$0,00</div>
         </div>
     </div>
@@ -324,14 +323,12 @@
                 const fechaRaw = linea.substring(1, 9);
                 const ptoVta = linea.substring(12, 16);
                 const nroCbte = linea.substring(16, 24);
-                const docTipo = linea.substring(35, 37); // Extraemos el Tipo de Documento AFIP
+                const docTipo = linea.substring(35, 37); 
                 const cliente = linea.substring(48, 78).trim();
                 const cae = linea.substring(260, 274);
                 
                 const importeBruto = parseFloat(linea.substring(78, 93)) / 100;
                 
-                // Evaluar Condición frente a Rentas
-                // Código 80 corresponde a CUIT (Inscriptos). Cualquier otro (99, 96, 86) es Consumidor Final.
                 let esInscripto = (docTipo === '80');
                 let condicionNombre = esInscripto ? 'INSCRIPTO' : 'C. FINAL';
 
@@ -341,10 +338,11 @@
                     totalBaseRentasCF += importeBruto;
                 }
                 
-                // El resto de los cálculos impositivos (la base general sigue siendo el total de la factura)
                 const impuestoRentas = importeBruto * 0.045; 
                 const baseTasa = importeBruto - impuestoRentas; 
-                const impuestoTasa = baseTasa * 0.10; 
+                
+                // AQUÍ SE CAMBIÓ LA FÓRMULA DE 0.10 A 0.01 (1%)
+                const impuestoTasa = baseTasa * 0.01; 
 
                 totalMonto += importeBruto;
                 totalImpRentas += impuestoRentas;
@@ -371,7 +369,6 @@
         prepararCSV();
     }
 
-    // Formateadores
     function fMoneda(valor) {
         return '$' + valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -383,11 +380,9 @@
     }
 
     function actualizarUI(monto, bRentasCF, bRentasINS, iRentas, bTasa, iTasa) {
-        // 1. Dashboard Principal
         document.getElementById('kpi-cantidad').innerText = facturasProcesadas.length;
         document.getElementById('kpi-monto').innerText = fMoneda(monto);
         
-        // Tarjetas divididas
         document.getElementById('kpi-base-rentas-cf').innerText = fMoneda(bRentasCF);
         document.getElementById('kpi-base-rentas-ins').innerText = fMoneda(bRentasINS);
         
@@ -395,31 +390,26 @@
         document.getElementById('kpi-base-tasa').innerText = fMoneda(bTasa);
         document.getElementById('kpi-imp-tasa').innerText = fMoneda(iTasa);
 
-        // 2. Dashboard Gemelo
         document.getElementById('raw-cantidad').innerText = facturasProcesadas.length;
         document.getElementById('raw-monto').innerText = fCrudo(monto);
         
-        // Tarjetas gemelas divididas
         document.getElementById('raw-base-rentas-cf').innerText = fCrudo(bRentasCF);
         document.getElementById('raw-base-rentas-ins').innerText = fCrudo(bRentasINS);
         
         document.getElementById('raw-imp-rentas').innerText = fCrudo(iRentas);
-        document.getElementById('raw-base-tasa').innerText = fAnglo(bTasa); // Anglosajón
+        document.getElementById('raw-base-tasa').innerText = fAnglo(bTasa);
         document.getElementById('raw-imp-tasa').innerText = fCrudo(iTasa);
 
-        // Mostrar UI
         document.getElementById('dashboard').style.display = 'grid';
         document.getElementById('titulo-crudos').style.display = 'block';
         document.getElementById('dashboard-raw').style.display = 'grid';
         document.getElementById('results').style.display = 'block';
 
-        // Llenar tabla
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
 
         facturasProcesadas.forEach(f => {
             const tr = document.createElement('tr');
-            // Distintivo visual para la condición
             const badge = f.esInscripto ? `<span class="badge-cond bg-ins">INSCRIPTO</span>` : `<span class="badge-cond bg-cf">C. FINAL</span>`;
             
             tr.innerHTML = `
