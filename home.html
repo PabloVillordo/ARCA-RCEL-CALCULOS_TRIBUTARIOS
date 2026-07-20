@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Facturas AFIP a CSV - Versión Contable</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 { margin-bottom: 0.5rem; font-size: 1.8rem; }
+        p.subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+
+        /* Panel de Carga */
+        .upload-panel {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        input[type="file"] { display: none; }
+
+        .file-label {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            margin-bottom: 1rem;
+            transition: background-color 0.2s;
+        }
+        .file-label:hover { background-color: #2563eb; }
+        #file-name { display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+
+        .btn-process {
+            background-color: var(--success);
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+        .btn-process:hover { background-color: #059669; }
+
+        /* Dashboard Principal (Formateado) */
+        .dashboard-grid {
+            display: none; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .card h3 { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
+        .card .value { font-size: 1.6rem; font-weight: bold; color: #38bdf8; }
+        .card .value.impuesto { color: var(--warning); }
+
+        /* Dashboard Gemelo (Crudo para copiar) */
+        .dashboard-raw {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card-raw {
+            background-color: #080c17; /* Más oscuro para diferenciar */
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px dashed var(--text-muted);
+            text-align: center;
+        }
+        .card-raw h3 { margin: 0 0 0.5rem 0; font-size: 0.75rem; color: var(--text-muted); }
+        
+        .raw-text {
+            font-size: 1.3rem;
+            font-family: monospace;
+            color: var(--success);
+            background-color: rgba(16, 185, 129, 0.1);
+            padding: 0.3rem;
+            border-radius: 6px;
+            user-select: all; /* Magia: 1 clic selecciona todo */
+            cursor: copy;
+            display: inline-block;
+        }
+        .raw-text:active { background-color: var(--success); color: white; }
+
+        .section-title {
+            display: none;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Resultados y Tabla */
+        .results-section { display: none; margin-top: 2rem;}
+        .header-results { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        
+        .btn-download {
+            background-color: var(--success);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1100px; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background-color: #151f32; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+        tr:last-child td { border-bottom: none; }
+        .monto { font-family: monospace; font-size: 0.95rem; text-align: right;}
+        .col-calc { background-color: rgba(59, 130, 246, 0.05); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Procesador de Facturas AFIP + Cálculo Tributario</h1>
+    <p class="subtitle">Automatiza la extracción de datos y calcula tus liquidaciones.</p>
+
+    <div class="upload-panel">
+        <label for="fileInput" class="file-label">?? Seleccionar CABECERA.txt</label>
+        <input type="file" id="fileInput" accept=".txt" onchange="mostrarNombreArchivo()">
+        <span id="file-name">Ningún archivo seleccionado</span>
+        <button id="btnProcess" class="btn-process" onclick="procesarArchivo()">Procesar Facturas y Calcular</button>
+    </div>
+
+    <div class="dashboard-grid" id="dashboard">
+        <div class="card">
+            <h3>Facturas Emitidas</h3>
+            <div class="value" id="kpi-cantidad" style="color: var(--text-main);">0</div>
+        </div>
+        <div class="card">
+            <h3>Total Facturado</h3>
+            <div class="value" id="kpi-monto">$0,00</div>
+        </div>
+        <div class="card">
+            <h3>Base DDJJ Rentas</h3>
+            <div class="value" id="kpi-base-rentas">$0,00</div>
+        </div>
+        <div class="card">
+            <h3>Imp. Rentas (4,5%)</h3>
+            <div class="value impuesto" id="kpi-imp-rentas">$0,00</div>
+        </div>
+        <div class="card">
+            <h3>Base Tasa MP</h3>
+            <div class="value" id="kpi-base-tasa">$0,00</div>
+        </div>
+        <div class="card">
+            <h3>Imp. Tasa MP (10%)</h3>
+            <div class="value impuesto" id="kpi-imp-tasa">$0,00</div>
+        </div>
+    </div>
+
+    <h2 class="section-title" id="titulo-crudos">?? Valores crudos listos para copiar y pegar (Clickeá el número)</h2>
+    <div class="dashboard-raw" id="dashboard-raw">
+        <div class="card-raw">
+            <h3>Copiar Cantidad</h3>
+            <div class="raw-text" id="raw-cantidad" title="Clic para copiar">0</div>
+        </div>
+        <div class="card-raw">
+            <h3>Copiar Total</h3>
+            <div class="raw-text" id="raw-monto" title="Clic para copiar">0,00</div>
+        </div>
+        <div class="card-raw">
+            <h3>Copiar Base Rentas</h3>
+            <div class="raw-text" id="raw-base-rentas" title="Clic para copiar">0,00</div>
+        </div>
+        <div class="card-raw">
+            <h3>Copiar Imp. Rentas</h3>
+            <div class="raw-text" id="raw-imp-rentas" title="Clic para copiar">0,00</div>
+        </div>
+        <div class="card-raw">
+            <h3>Copiar Base Tasa</h3>
+            <div class="raw-text" id="raw-base-tasa" title="Clic para copiar">0,00</div>
+        </div>
+        <div class="card-raw">
+            <h3>Copiar Imp. Tasa</h3>
+            <div class="raw-text" id="raw-imp-tasa" title="Clic para copiar">0,00</div>
+        </div>
+    </div>
+
+    <div class="results-section" id="results">
+        <div class="header-results">
+            <h2>Planilla de Liquidación Detallada</h2>
+            <a id="btnDownload" class="btn-download" download="liquidaciones_afip.csv">?? Descargar Planilla CSV</a>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Comprobante</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>CAE</th>
+                        <th style="text-align: right;">Total ($)</th>
+                        <th class="col-calc" style="text-align: right;">Base Imp. Rentas</th>
+                        <th class="col-calc" style="text-align: right;">Imp. Rentas Mnes</th>
+                        <th class="col-calc" style="text-align: right;">Base Tasa MP</th>
+                        <th class="col-calc" style="text-align: right;">Imp. Tasa MP</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let facturasProcesadas = [];
+    let csvContenido = "";
+
+    function mostrarNombreArchivo() {
+        const input = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('file-name');
+        const btnProcess = document.getElementById('btnProcess');
+        
+        if (input.files.length > 0) {
+            fileNameDisplay.innerText = "Archivo seleccionado: " + input.files[0].name;
+            btnProcess.style.display = "inline-block";
+        } else {
+            fileNameDisplay.innerText = "Ningún archivo seleccionado";
+            btnProcess.style.display = "none";
+        }
+    }
+
+    function procesarArchivo() {
+        const input = document.getElementById('fileInput');
+        if (input.files.length === 0) return;
+
+        const archivo = input.files[0];
+        const lector = new FileReader();
+
+        lector.onload = function(evento) {
+            const contenido = evento.target.result;
+            analizarTextoAFIP(contenido);
+        };
+
+        lector.readAsText(archivo, "UTF-8");
+    }
+
+    function analizarTextoAFIP(texto) {
+        facturasProcesadas = [];
+        let totalMonto = 0;
+        let totalBaseRentas = 0;
+        let totalImpRentas = 0;
+        let totalBaseTasa = 0;
+        let totalImpTasa = 0;
+        
+        const lineas = texto.split(/\r?\n/);
+
+        lineas.forEach(linea => {
+            if (linea.startsWith('1') && !linea.startsWith('11')) {
+                if(linea.length < 274) return; 
+
+                const fechaRaw = linea.substring(1, 9);
+                const ptoVta = linea.substring(12, 16);
+                const nroCbte = linea.substring(16, 24);
+                const cliente = linea.substring(48, 78).trim();
+                const cae = linea.substring(260, 274);
+                
+                const importeBruto = parseFloat(linea.substring(78, 93)) / 100;
+                
+                const baseRentas = importeBruto; 
+                const impuestoRentas = importeBruto * 0.045; 
+                const baseTasa = importeBruto - impuestoRentas; 
+                const impuestoTasa = baseTasa * 0.10; 
+
+                totalMonto += importeBruto;
+                totalBaseRentas += baseRentas;
+                totalImpRentas += impuestoRentas;
+                totalBaseTasa += baseTasa;
+                totalImpTasa += impuestoTasa;
+
+                facturasProcesadas.push({
+                    comprobante: `${ptoVta}-${nroCbte}`,
+                    fecha: `${fechaRaw.substring(6,8)}/${fechaRaw.substring(4,6)}/${fechaRaw.substring(0,4)}`,
+                    cliente: cliente,
+                    cae: cae,
+                    totalStr: importeBruto.toFixed(2).replace('.', ','),
+                    baseRentasStr: baseRentas.toFixed(2).replace('.', ','),
+                    impRentasStr: impuestoRentas.toFixed(2).replace('.', ','),
+                    baseTasaStr: baseTasa.toFixed(2).replace('.', ','),
+                    impTasaStr: impuestoTasa.toFixed(2).replace('.', ',')
+                });
+            }
+        });
+
+        actualizarUI(totalMonto, totalBaseRentas, totalImpRentas, totalBaseTasa, totalImpTasa);
+        prepararCSV();
+    }
+
+    // Formateadores
+    function fMoneda(valor) {
+        return '$' + valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    // Formato crudo: 2 decimales, sin puntos de miles, coma como separador decimal.
+    function fCrudo(valor) {
+        return valor.toFixed(2).replace('.', ',');
+    }
+
+    function actualizarUI(monto, bRentas, iRentas, bTasa, iTasa) {
+        // 1. Dashboard Principal (Con formato para lectura humana)
+        document.getElementById('kpi-cantidad').innerText = facturasProcesadas.length;
+        document.getElementById('kpi-monto').innerText = fMoneda(monto);
+        document.getElementById('kpi-base-rentas').innerText = fMoneda(bRentas);
+        document.getElementById('kpi-imp-rentas').innerText = fMoneda(iRentas);
+        document.getElementById('kpi-base-tasa').innerText = fMoneda(bTasa);
+        document.getElementById('kpi-imp-tasa').innerText = fMoneda(iTasa);
+
+        // 2. Dashboard Gemelo (Crudo para copiar y pegar)
+        document.getElementById('raw-cantidad').innerText = facturasProcesadas.length;
+        document.getElementById('raw-monto').innerText = fCrudo(monto);
+        document.getElementById('raw-base-rentas').innerText = fCrudo(bRentas);
+        document.getElementById('raw-imp-rentas').innerText = fCrudo(iRentas);
+        document.getElementById('raw-base-tasa').innerText = fCrudo(bTasa);
+        document.getElementById('raw-imp-tasa').innerText = fCrudo(iTasa);
+
+        // Mostrar todo
+        document.getElementById('dashboard').style.display = 'grid';
+        document.getElementById('titulo-crudos').style.display = 'block';
+        document.getElementById('dashboard-raw').style.display = 'grid';
+        document.getElementById('results').style.display = 'block';
+
+        // Llenar tabla
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
+
+        facturasProcesadas.forEach(f => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${f.comprobante}</strong></td>
+                <td>${f.fecha}</td>
+                <td>${f.cliente}</td>
+                <td>${f.cae}</td>
+                <td class="monto">$ ${f.totalStr}</td>
+                <td class="monto col-calc">$ ${f.baseRentasStr}</td>
+                <td class="monto col-calc" style="color: var(--warning);">$ ${f.impRentasStr}</td>
+                <td class="monto col-calc">$ ${f.baseTasaStr}</td>
+                <td class="monto col-calc" style="color: var(--warning);">$ ${f.impTasaStr}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function prepararCSV() {
+        const cabeceras = [
+            '"Comprobante"', '"Fecha"', '"Cliente"', '"CAE"', '"Total ($)"', 
+            '"Base Imponible DDJJ Rentas"', '"Impuesto DJM Rentas Mnes"', 
+            '"Base imponible DJM Tasa MP"', '"Impuesto DJM Tasa MP"'
+        ];
+        csvContenido = cabeceras.join(';') + '\r\n';
+
+        facturasProcesadas.forEach(f => {
+            const fila = [
+                `"${f.comprobante}"`, `"${f.fecha}"`, `"${f.cliente}"`, `"${f.cae}"`,
+                `"${f.totalStr}"`, `"${f.baseRentasStr}"`, `"${f.impRentasStr}"`,
+                `"${f.baseTasaStr}"`, `"${f.impTasaStr}"`
+            ];
+            csvContenido += fila.join(';') + '\r\n';
+        });
+
+        const blob = new Blob(["\uFEFF" + csvContenido], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        document.getElementById('btnDownload').href = url;
+    }
+</script>
+</body>
+</html>
