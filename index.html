@@ -15,6 +15,7 @@
             --warning: #f59e0b;
             --danger: #ef4444;
             --border: #334155;
+            --highlight: #8b5cf6;
         }
 
         body {
@@ -75,7 +76,8 @@
         /* Dashboard Principal (Con Formato) */
         .dashboard-grid {
             display: none; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            /* Se ajusta el minmax a 160px para que entren las 7 tarjetas bien distribuidas */
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 1.2rem;
             margin-bottom: 1rem;
         }
@@ -86,14 +88,15 @@
             border-radius: 12px;
             border: 1px solid var(--border);
         }
-        .card h3 { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
-        .card .value { font-size: 1.6rem; font-weight: bold; color: #38bdf8; }
+        .card h3 { margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        .card .value { font-size: 1.5rem; font-weight: bold; color: #38bdf8; }
         .card .value.impuesto { color: var(--warning); }
+        .card .value.separado { color: var(--highlight); }
 
         /* Dashboard Gemelo (Crudo para copiar) */
         .dashboard-raw {
             display: none;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 1.2rem;
             margin-bottom: 2rem;
         }
@@ -108,7 +111,7 @@
         .card-raw h3 { margin: 0 0 0.5rem 0; font-size: 0.75rem; color: var(--text-muted); }
         
         .raw-text {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-family: monospace;
             color: var(--success);
             background-color: rgba(16, 185, 129, 0.1);
@@ -150,12 +153,19 @@
             border: 1px solid var(--border);
             overflow-x: auto;
         }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1100px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1200px; }
         th, td { padding: 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
-        th { background-color: #151f32; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+        th { background-color: #151f32; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
         tr:last-child td { border-bottom: none; }
+        
         .monto { font-family: monospace; font-size: 0.95rem; text-align: right;}
         .col-calc { background-color: rgba(59, 130, 246, 0.05); }
+        
+        .badge-cond {
+            font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold;
+        }
+        .bg-cf { background-color: #3b82f6; color: white; }
+        .bg-ins { background-color: #8b5cf6; color: white; }
     </style>
 </head>
 <body>
@@ -173,7 +183,7 @@
 
     <div class="dashboard-grid" id="dashboard">
         <div class="card">
-            <h3>Facturas Emitidas</h3>
+            <h3>Cant. Facturas</h3>
             <div class="value" id="kpi-cantidad" style="color: var(--text-main);">0</div>
         </div>
         <div class="card">
@@ -181,8 +191,12 @@
             <div class="value" id="kpi-monto">$0,00</div>
         </div>
         <div class="card">
-            <h3>Base DDJJ Rentas</h3>
-            <div class="value" id="kpi-base-rentas">$0,00</div>
+            <h3>Base Rentas (C. Final)</h3>
+            <div class="value separado" id="kpi-base-rentas-cf">$0,00</div>
+        </div>
+        <div class="card">
+            <h3>Base Rentas (Inscripto)</h3>
+            <div class="value separado" id="kpi-base-rentas-ins">$0,00</div>
         </div>
         <div class="card">
             <h3>Imp. Rentas (4,5%)</h3>
@@ -209,8 +223,12 @@
             <div class="raw-text" id="raw-monto" title="Clic para copiar">0,00</div>
         </div>
         <div class="card-raw">
-            <h3>Copiar Base Rentas</h3>
-            <div class="raw-text" id="raw-base-rentas" title="Clic para copiar">0,00</div>
+            <h3>Copiar Base CF</h3>
+            <div class="raw-text" id="raw-base-rentas-cf" title="Clic para copiar">0,00</div>
+        </div>
+        <div class="card-raw">
+            <h3>Copiar Base INS.</h3>
+            <div class="raw-text" id="raw-base-rentas-ins" title="Clic para copiar">0,00</div>
         </div>
         <div class="card-raw">
             <h3>Copiar Imp. Rentas</h3>
@@ -239,6 +257,7 @@
                         <th>Fecha</th>
                         <th>Cliente</th>
                         <th>CAE</th>
+                        <th>Condición</th>
                         <th style="text-align: right;">Total ($)</th>
                         <th class="col-calc" style="text-align: right;">Base Imp. Rentas</th>
                         <th class="col-calc" style="text-align: right;">Imp. Rentas Mnes</th>
@@ -288,8 +307,10 @@
 
     function analizarTextoAFIP(texto) {
         facturasProcesadas = [];
+        
         let totalMonto = 0;
-        let totalBaseRentas = 0;
+        let totalBaseRentasCF = 0;
+        let totalBaseRentasINS = 0;
         let totalImpRentas = 0;
         let totalBaseTasa = 0;
         let totalImpTasa = 0;
@@ -303,18 +324,29 @@
                 const fechaRaw = linea.substring(1, 9);
                 const ptoVta = linea.substring(12, 16);
                 const nroCbte = linea.substring(16, 24);
+                const docTipo = linea.substring(35, 37); // Extraemos el Tipo de Documento AFIP
                 const cliente = linea.substring(48, 78).trim();
                 const cae = linea.substring(260, 274);
                 
                 const importeBruto = parseFloat(linea.substring(78, 93)) / 100;
                 
-                const baseRentas = importeBruto; 
+                // Evaluar Condición frente a Rentas
+                // Código 80 corresponde a CUIT (Inscriptos). Cualquier otro (99, 96, 86) es Consumidor Final.
+                let esInscripto = (docTipo === '80');
+                let condicionNombre = esInscripto ? 'INSCRIPTO' : 'C. FINAL';
+
+                if (esInscripto) {
+                    totalBaseRentasINS += importeBruto;
+                } else {
+                    totalBaseRentasCF += importeBruto;
+                }
+                
+                // El resto de los cálculos impositivos (la base general sigue siendo el total de la factura)
                 const impuestoRentas = importeBruto * 0.045; 
                 const baseTasa = importeBruto - impuestoRentas; 
                 const impuestoTasa = baseTasa * 0.10; 
 
                 totalMonto += importeBruto;
-                totalBaseRentas += baseRentas;
                 totalImpRentas += impuestoRentas;
                 totalBaseTasa += baseTasa;
                 totalImpTasa += impuestoTasa;
@@ -324,8 +356,10 @@
                     fecha: `${fechaRaw.substring(6,8)}/${fechaRaw.substring(4,6)}/${fechaRaw.substring(0,4)}`,
                     cliente: cliente,
                     cae: cae,
+                    condicion: condicionNombre,
+                    esInscripto: esInscripto,
                     totalStr: importeBruto.toFixed(2).replace('.', ','),
-                    baseRentasStr: baseRentas.toFixed(2).replace('.', ','),
+                    baseRentasStr: importeBruto.toFixed(2).replace('.', ','),
                     impRentasStr: impuestoRentas.toFixed(2).replace('.', ','),
                     baseTasaStr: baseTasa.toFixed(2).replace('.', ','),
                     impTasaStr: impuestoTasa.toFixed(2).replace('.', ',')
@@ -333,7 +367,7 @@
             }
         });
 
-        actualizarUI(totalMonto, totalBaseRentas, totalImpRentas, totalBaseTasa, totalImpTasa);
+        actualizarUI(totalMonto, totalBaseRentasCF, totalBaseRentasINS, totalImpRentas, totalBaseTasa, totalImpTasa);
         prepararCSV();
     }
 
@@ -341,38 +375,39 @@
     function fMoneda(valor) {
         return '$' + valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    
-    // Formato crudo general: 2 decimales, sin puntos de miles, coma como separador decimal.
     function fCrudo(valor) {
         return valor.toFixed(2).replace('.', ',');
     }
-
-    // Formato anglosajón para la Base Tasa: comas para miles, punto para decimales.
     function fAnglo(valor) {
-        return valor.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return valor.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
     }
 
-    function actualizarUI(monto, bRentas, iRentas, bTasa, iTasa) {
-        // 1. Dashboard Principal (Con formato para lectura humana)
+    function actualizarUI(monto, bRentasCF, bRentasINS, iRentas, bTasa, iTasa) {
+        // 1. Dashboard Principal
         document.getElementById('kpi-cantidad').innerText = facturasProcesadas.length;
         document.getElementById('kpi-monto').innerText = fMoneda(monto);
-        document.getElementById('kpi-base-rentas').innerText = fMoneda(bRentas);
+        
+        // Tarjetas divididas
+        document.getElementById('kpi-base-rentas-cf').innerText = fMoneda(bRentasCF);
+        document.getElementById('kpi-base-rentas-ins').innerText = fMoneda(bRentasINS);
+        
         document.getElementById('kpi-imp-rentas').innerText = fMoneda(iRentas);
         document.getElementById('kpi-base-tasa').innerText = fMoneda(bTasa);
         document.getElementById('kpi-imp-tasa').innerText = fMoneda(iTasa);
 
-        // 2. Dashboard Gemelo (Crudo para copiar y pegar)
+        // 2. Dashboard Gemelo
         document.getElementById('raw-cantidad').innerText = facturasProcesadas.length;
         document.getElementById('raw-monto').innerText = fCrudo(monto);
-        document.getElementById('raw-base-rentas').innerText = fCrudo(bRentas);
+        
+        // Tarjetas gemelas divididas
+        document.getElementById('raw-base-rentas-cf').innerText = fCrudo(bRentasCF);
+        document.getElementById('raw-base-rentas-ins').innerText = fCrudo(bRentasINS);
+        
         document.getElementById('raw-imp-rentas').innerText = fCrudo(iRentas);
-        
-        // ACÁ SE APLICA EL CAMBIO SOLICITADO:
-        document.getElementById('raw-base-tasa').innerText = fAnglo(bTasa); 
-        
+        document.getElementById('raw-base-tasa').innerText = fAnglo(bTasa); // Anglosajón
         document.getElementById('raw-imp-tasa').innerText = fCrudo(iTasa);
 
-        // Mostrar todo
+        // Mostrar UI
         document.getElementById('dashboard').style.display = 'grid';
         document.getElementById('titulo-crudos').style.display = 'block';
         document.getElementById('dashboard-raw').style.display = 'grid';
@@ -384,11 +419,15 @@
 
         facturasProcesadas.forEach(f => {
             const tr = document.createElement('tr');
+            // Distintivo visual para la condición
+            const badge = f.esInscripto ? `<span class="badge-cond bg-ins">INSCRIPTO</span>` : `<span class="badge-cond bg-cf">C. FINAL</span>`;
+            
             tr.innerHTML = `
                 <td><strong>${f.comprobante}</strong></td>
                 <td>${f.fecha}</td>
                 <td>${f.cliente}</td>
                 <td>${f.cae}</td>
+                <td>${badge}</td>
                 <td class="monto">$ ${f.totalStr}</td>
                 <td class="monto col-calc">$ ${f.baseRentasStr}</td>
                 <td class="monto col-calc" style="color: var(--warning);">$ ${f.impRentasStr}</td>
@@ -401,7 +440,7 @@
 
     function prepararCSV() {
         const cabeceras = [
-            '"Comprobante"', '"Fecha"', '"Cliente"', '"CAE"', '"Total ($)"', 
+            '"Comprobante"', '"Fecha"', '"Cliente"', '"CAE"', '"Condición"', '"Total ($)"', 
             '"Base Imponible DDJJ Rentas"', '"Impuesto DJM Rentas Mnes"', 
             '"Base imponible DJM Tasa MP"', '"Impuesto DJM Tasa MP"'
         ];
@@ -410,6 +449,7 @@
         facturasProcesadas.forEach(f => {
             const fila = [
                 `"${f.comprobante}"`, `"${f.fecha}"`, `"${f.cliente}"`, `"${f.cae}"`,
+                `"${f.condicion}"`,
                 `"${f.totalStr}"`, `"${f.baseRentasStr}"`, `"${f.impRentasStr}"`,
                 `"${f.baseTasaStr}"`, `"${f.impTasaStr}"`
             ];
