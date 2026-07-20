@@ -72,7 +72,7 @@
         }
         .btn-process:hover { background-color: #059669; }
 
-        /* Dashboard Principal (Formateado) */
+        /* Dashboard Principal (Con Formato) */
         .dashboard-grid {
             display: none; 
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -99,7 +99,7 @@
         }
         
         .card-raw {
-            background-color: #080c17; /* Más oscuro para diferenciar */
+            background-color: #080c17;
             padding: 1rem;
             border-radius: 12px;
             border: 1px dashed var(--text-muted);
@@ -114,7 +114,7 @@
             background-color: rgba(16, 185, 129, 0.1);
             padding: 0.3rem;
             border-radius: 6px;
-            user-select: all; /* Magia: 1 clic selecciona todo */
+            user-select: all; /* 1 clic selecciona todo */
             cursor: copy;
             display: inline-block;
         }
@@ -218,7 +218,7 @@
         </div>
         <div class="card-raw">
             <h3>Copiar Base Tasa</h3>
-            <div class="raw-text" id="raw-base-tasa" title="Clic para copiar">0.00</div>
+            <div class="raw-text" id="raw-base-tasa" title="Clic para copiar">0.00</div> 
         </div>
         <div class="card-raw">
             <h3>Copiar Imp. Tasa</h3>
@@ -341,9 +341,15 @@
     function fMoneda(valor) {
         return '$' + valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    // Formato crudo: 2 decimales, sin puntos de miles, coma como separador decimal.
+    
+    // Formato crudo general: 2 decimales, sin puntos de miles, coma como separador decimal.
     function fCrudo(valor) {
         return valor.toFixed(2).replace('.', ',');
+    }
+
+    // Formato anglosajón para la Base Tasa: comas para miles, punto para decimales.
+    function fAnglo(valor) {
+        return valor.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function actualizarUI(monto, bRentas, iRentas, bTasa, iTasa) {
@@ -360,7 +366,10 @@
         document.getElementById('raw-monto').innerText = fCrudo(monto);
         document.getElementById('raw-base-rentas').innerText = fCrudo(bRentas);
         document.getElementById('raw-imp-rentas').innerText = fCrudo(iRentas);
-        document.getElementById('raw-base-tasa').innerText = fCrudo(bTasa);
+        
+        // ACÁ SE APLICA EL CAMBIO SOLICITADO:
+        document.getElementById('raw-base-tasa').innerText = fAnglo(bTasa); 
+        
         document.getElementById('raw-imp-tasa').innerText = fCrudo(iTasa);
 
         // Mostrar todo
