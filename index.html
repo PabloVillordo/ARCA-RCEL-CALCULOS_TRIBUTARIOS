@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversor de Facturas AFIP a CSV - Versión Contable</title>
+    <title>Conversor de Facturas AFIP a Excel/CSV</title>
+    <!-- Librería SheetJS para exportar a Excel nativo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -12,6 +14,7 @@
             --text-muted: #94a3b8;
             --primary: #3b82f6;
             --success: #10b981;
+            --excel: #107c41; /* Verde oficial de Excel */
             --warning: #f59e0b;
             --danger: #ef4444;
             --border: #334155;
@@ -26,11 +29,7 @@
             padding: 2rem;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
+        .container { max-width: 1400px; margin: 0 auto; }
         h1 { margin-bottom: 0.5rem; font-size: 1.8rem; }
         p.subtitle { color: var(--text-muted); margin-bottom: 2rem; }
 
@@ -81,12 +80,7 @@
             margin-bottom: 1rem;
         }
 
-        .card {
-            background-color: var(--card-bg);
-            padding: 1.2rem;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
+        .card { background-color: var(--card-bg); padding: 1.2rem; border-radius: 12px; border: 1px solid var(--border); }
         .card h3 { margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
         .card .value { font-size: 1.5rem; font-weight: bold; color: #38bdf8; }
         .card .value.impuesto { color: var(--warning); }
@@ -94,64 +88,42 @@
 
         /* Dashboard Gemelo (Crudo para copiar) */
         .dashboard-raw {
-            display: none;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 1.2rem;
-            margin-bottom: 2rem;
+            display: none; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.2rem; margin-bottom: 2rem;
         }
         
         .card-raw {
-            background-color: #080c17;
-            padding: 1rem;
-            border-radius: 12px;
-            border: 1px dashed var(--text-muted);
-            text-align: center;
+            background-color: #080c17; padding: 1rem; border-radius: 12px; border: 1px dashed var(--text-muted); text-align: center;
         }
         .card-raw h3 { margin: 0 0 0.5rem 0; font-size: 0.75rem; color: var(--text-muted); }
         
         .raw-text {
-            font-size: 1.2rem;
-            font-family: monospace;
-            color: var(--success);
-            background-color: rgba(16, 185, 129, 0.1);
-            padding: 0.3rem;
-            border-radius: 6px;
-            user-select: all; 
-            cursor: copy;
-            display: inline-block;
+            font-size: 1.2rem; font-family: monospace; color: var(--success); background-color: rgba(16, 185, 129, 0.1);
+            padding: 0.3rem; border-radius: 6px; user-select: all; cursor: copy; display: inline-block;
         }
         .raw-text:active { background-color: var(--success); color: white; }
 
         .section-title {
-            display: none;
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-            margin-top: 0;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 0.5rem;
+            display: none; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem; margin-top: 0;
+            border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
         }
 
         /* Resultados y Tabla */
         .results-section { display: none; margin-top: 2rem;}
-        .header-results { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .header-results { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;}
         
-        .btn-download {
-            background-color: var(--success);
-            color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-        }
+        .botones-descarga { display: flex; gap: 0.8rem; }
 
-        .table-container {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            overflow-x: auto;
+        .btn-download {
+            color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: bold; 
+            border: none; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center;
         }
+        .btn-csv { background-color: var(--success); }
+        .btn-csv:hover { background-color: #059669; }
+        
+        .btn-excel { background-color: var(--excel); }
+        .btn-excel:hover { background-color: #0c5e31; }
+
+        .table-container { background-color: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1200px; }
         th, td { padding: 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
         th { background-color: #151f32; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
@@ -160,9 +132,7 @@
         .monto { font-family: monospace; font-size: 0.95rem; text-align: right;}
         .col-calc { background-color: rgba(59, 130, 246, 0.05); }
         
-        .badge-cond {
-            font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold;
-        }
+        .badge-cond { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; }
         .bg-cf { background-color: #3b82f6; color: white; }
         .bg-ins { background-color: #8b5cf6; color: white; }
     </style>
@@ -171,7 +141,7 @@
 
 <div class="container">
     <h1>Procesador de Facturas AFIP + Cálculo Tributario</h1>
-    <p class="subtitle">Automatiza la extracción de datos y calcula tus liquidaciones.</p>
+    <p class="subtitle">Automatiza la extracción de datos y calcula tus liquidaciones al instante.</p>
 
     <div class="upload-panel">
         <label for="fileInput" class="file-label">?? Seleccionar CABECERA.txt</label>
@@ -180,6 +150,7 @@
         <button id="btnProcess" class="btn-process" onclick="procesarArchivo()">Procesar Facturas y Calcular</button>
     </div>
 
+    <!-- Dashboard Principal -->
     <div class="dashboard-grid" id="dashboard">
         <div class="card">
             <h3>Cant. Facturas</h3>
@@ -187,30 +158,31 @@
         </div>
         <div class="card">
             <h3>Total Facturado</h3>
-            <div class="value" id="kpi-monto">$0,00</div>
+            <div class="value" id="kpi-monto">0,00</div>
         </div>
         <div class="card">
             <h3>Base Rentas (C. Final)</h3>
-            <div class="value separado" id="kpi-base-rentas-cf">$0,00</div>
+            <div class="value separado" id="kpi-base-rentas-cf">0,00</div>
         </div>
         <div class="card">
             <h3>Base Rentas (Inscripto)</h3>
-            <div class="value separado" id="kpi-base-rentas-ins">$0,00</div>
+            <div class="value separado" id="kpi-base-rentas-ins">0,00</div>
         </div>
         <div class="card">
             <h3>Imp. Rentas (4,5%)</h3>
-            <div class="value impuesto" id="kpi-imp-rentas">$0,00</div>
+            <div class="value impuesto" id="kpi-imp-rentas">0,00</div>
         </div>
         <div class="card">
             <h3>Base Tasa MP</h3>
-            <div class="value" id="kpi-base-tasa">$0,00</div>
+            <div class="value" id="kpi-base-tasa">0,00</div>
         </div>
         <div class="card">
             <h3>Imp. Tasa MP (1%)</h3>
-            <div class="value impuesto" id="kpi-imp-tasa">$0,00</div>
+            <div class="value impuesto" id="kpi-imp-tasa">0,00</div>
         </div>
     </div>
 
+    <!-- Dashboard Gemelo (Crudo) -->
     <h2 class="section-title" id="titulo-crudos">?? Valores crudos listos para copiar y pegar (Clickeá el número)</h2>
     <div class="dashboard-raw" id="dashboard-raw">
         <div class="card-raw">
@@ -243,10 +215,15 @@
         </div>
     </div>
 
+    <!-- Resultados y Tabla -->
     <div class="results-section" id="results">
         <div class="header-results">
             <h2>Planilla de Liquidación Detallada</h2>
-            <a id="btnDownload" class="btn-download" download="liquidaciones_afip.csv">?? Descargar Planilla CSV</a>
+            <div class="botones-descarga">
+                <a id="btnDownload" class="btn-download btn-csv" download="liquidaciones_afip.csv">?? Descargar CSV</a>
+                <!-- NUEVO BOTÓN EXCEL -->
+                <button onclick="descargarExcel()" class="btn-download btn-excel">?? Descargar Excel (.xlsx)</button>
+            </div>
         </div>
         <div class="table-container">
             <table>
@@ -265,7 +242,8 @@
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    </tbody>
+                    <!-- Se inyecta con JS -->
+                </tbody>
             </table>
         </div>
     </div>
@@ -340,8 +318,6 @@
                 
                 const impuestoRentas = importeBruto * 0.045; 
                 const baseTasa = importeBruto - impuestoRentas; 
-                
-                // AQUÍ SE CAMBIÓ LA FÓRMULA DE 0.10 A 0.01 (1%)
                 const impuestoTasa = baseTasa * 0.01; 
 
                 totalMonto += importeBruto;
@@ -349,6 +325,7 @@
                 totalBaseTasa += baseTasa;
                 totalImpTasa += impuestoTasa;
 
+                // Guardamos tanto los strings formateados (para HTML/CSV) como los números crudos (para Excel)
                 facturasProcesadas.push({
                     comprobante: `${ptoVta}-${nroCbte}`,
                     fecha: `${fechaRaw.substring(6,8)}/${fechaRaw.substring(4,6)}/${fechaRaw.substring(0,4)}`,
@@ -360,7 +337,13 @@
                     baseRentasStr: importeBruto.toFixed(2).replace('.', ','),
                     impRentasStr: impuestoRentas.toFixed(2).replace('.', ','),
                     baseTasaStr: baseTasa.toFixed(2).replace('.', ','),
-                    impTasaStr: impuestoTasa.toFixed(2).replace('.', ',')
+                    impTasaStr: impuestoTasa.toFixed(2).replace('.', ','),
+                    // Valores numéricos puros para exportar correctamente a Excel
+                    totalNum: importeBruto,
+                    baseRentasNum: importeBruto,
+                    impRentasNum: impuestoRentas,
+                    baseTasaNum: baseTasa,
+                    impTasaNum: impuestoTasa
                 });
             }
         });
@@ -392,10 +375,8 @@
 
         document.getElementById('raw-cantidad').innerText = facturasProcesadas.length;
         document.getElementById('raw-monto').innerText = fCrudo(monto);
-        
         document.getElementById('raw-base-rentas-cf').innerText = fCrudo(bRentasCF);
         document.getElementById('raw-base-rentas-ins').innerText = fCrudo(bRentasINS);
-        
         document.getElementById('raw-imp-rentas').innerText = fCrudo(iRentas);
         document.getElementById('raw-base-tasa').innerText = fAnglo(bTasa);
         document.getElementById('raw-imp-tasa').innerText = fCrudo(iTasa);
@@ -449,6 +430,40 @@
         const blob = new Blob(["\uFEFF" + csvContenido], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         document.getElementById('btnDownload').href = url;
+    }
+
+    // NUEVA FUNCIÓN: Exportar a Excel Nativo (.xlsx)
+    function descargarExcel() {
+        if (facturasProcesadas.length === 0) return;
+
+        // 1. Armamos la estructura de filas para Excel
+        const datosParaExcel = [
+            ["Comprobante", "Fecha", "Cliente", "CAE", "Condición", "Total ($)", "Base Imponible Rentas", "Impuesto Rentas Mnes", "Base Imponible Tasa MP", "Impuesto Tasa MP"]
+        ];
+
+        // 2. Insertamos los datos usando los valores NUMÉRICOS (sin convertir a string)
+        facturasProcesadas.forEach(f => {
+            datosParaExcel.push([
+                f.comprobante,
+                f.fecha,
+                f.cliente,
+                f.cae,
+                f.condicion,
+                f.totalNum,       // Número real
+                f.baseRentasNum,  // Número real
+                f.impRentasNum,   // Número real
+                f.baseTasaNum,    // Número real
+                f.impTasaNum      // Número real
+            ]);
+        });
+
+        // 3. Generamos la hoja de cálculo
+        const hoja = XLSX.utils.aoa_to_sheet(datosParaExcel);
+        
+        // 4. Creamos el archivo y lo forzamos a descargar
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, "Liquidaciones AFIP");
+        XLSX.writeFile(libro, "liquidaciones_afip.xlsx");
     }
 </script>
 </body>
