@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversor de Facturas AFIP a Excel/CSV</title>
-    <!-- LibrerÌa SheetJS para exportar a Excel nativo -->
+    <!-- Librer√≠a SheetJS para exportar a Excel nativo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -140,13 +140,13 @@
 <body>
 
 <div class="container">
-    <h1>Procesador de Facturas AFIP + Calculo Tributario</h1>
-    <p class="subtitle">Automatiza la extraccion de datos y calcula tus liquidaciones al instante.</p>
+    <h1>Procesador de Facturas AFIP + C√°lculo Tributario</h1>
+    <p class="subtitle">Automatiza la extracci√≥n de datos y calcula tus liquidaciones al instante.</p>
 
     <div class="upload-panel">
-        <label for="fileInput" class="file-label"> Seleccionar CABECERA.txt</label>
+        <label for="fileInput" class="file-label">üìÅ Seleccionar CABECERA.txt</label>
         <input type="file" id="fileInput" accept=".txt" onchange="mostrarNombreArchivo()">
-        <span id="file-name">Ningun archivo seleccionado</span>
+        <span id="file-name">Ning√∫n archivo seleccionado</span>
         <button id="btnProcess" class="btn-process" onclick="procesarArchivo()">Procesar Facturas y Calcular</button>
     </div>
 
@@ -183,7 +183,7 @@
     </div>
 
     <!-- Dashboard Gemelo (Crudo) -->
-    <h2 class="section-title" id="titulo-crudos">?? Valores crudos listos para copiar y pegar (Clicke· el n˙mero)</h2>
+    <h2 class="section-title" id="titulo-crudos">üìã Valores crudos listos para copiar y pegar (Clicke√° el n√∫mero)</h2>
     <div class="dashboard-raw" id="dashboard-raw">
         <div class="card-raw">
             <h3>Copiar Cantidad</h3>
@@ -218,11 +218,11 @@
     <!-- Resultados y Tabla -->
     <div class="results-section" id="results">
         <div class="header-results">
-            <h2>Planilla de LiquidaciÛn Detallada</h2>
+            <h2>Planilla de Liquidaci√≥n Detallada</h2>
             <div class="botones-descarga">
-                <a id="btnDownload" class="btn-download btn-csv" download="liquidaciones_afip.csv">?? Descargar CSV</a>
-                <!-- NUEVO BOT”N EXCEL -->
-                <button onclick="descargarExcel()" class="btn-download btn-excel">?? Descargar Excel (.xlsx)</button>
+                <a id="btnDownload" class="btn-download btn-csv" download="liquidaciones_afip.csv">üì• Descargar CSV</a>
+                <!-- NUEVO BOT√ìN EXCEL -->
+                <button onclick="descargarExcel()" class="btn-download btn-excel">üìä Descargar Excel (.xlsx)</button>
             </div>
         </div>
         <div class="table-container">
@@ -233,7 +233,7 @@
                         <th>Fecha</th>
                         <th>Cliente</th>
                         <th>CAE</th>
-                        <th>CondiciÛn</th>
+                        <th>Condici√≥n</th>
                         <th style="text-align: right;">Total ($)</th>
                         <th class="col-calc" style="text-align: right;">Base Imp. Rentas</th>
                         <th class="col-calc" style="text-align: right;">Imp. Rentas Mnes</th>
@@ -262,7 +262,7 @@
             fileNameDisplay.innerText = "Archivo seleccionado: " + input.files[0].name;
             btnProcess.style.display = "inline-block";
         } else {
-            fileNameDisplay.innerText = "Ning˙n archivo seleccionado";
+            fileNameDisplay.innerText = "Ning√∫n archivo seleccionado";
             btnProcess.style.display = "none";
         }
     }
@@ -325,7 +325,7 @@
                 totalBaseTasa += baseTasa;
                 totalImpTasa += impuestoTasa;
 
-                // Guardamos tanto los strings formateados (para HTML/CSV) como los n˙meros crudos (para Excel)
+                // Guardamos tanto los strings formateados (para HTML/CSV) como los n√∫meros crudos (para Excel)
                 facturasProcesadas.push({
                     comprobante: `${ptoVta}-${nroCbte}`,
                     fecha: `${fechaRaw.substring(6,8)}/${fechaRaw.substring(4,6)}/${fechaRaw.substring(0,4)}`,
@@ -338,7 +338,7 @@
                     impRentasStr: impuestoRentas.toFixed(2).replace('.', ','),
                     baseTasaStr: baseTasa.toFixed(2).replace('.', ','),
                     impTasaStr: impuestoTasa.toFixed(2).replace('.', ','),
-                    // Valores numÈricos puros para exportar correctamente a Excel
+                    // Valores num√©ricos puros para exportar correctamente a Excel
                     totalNum: importeBruto,
                     baseRentasNum: importeBruto,
                     impRentasNum: impuestoRentas,
@@ -411,7 +411,7 @@
 
     function prepararCSV() {
         const cabeceras = [
-            '"Comprobante"', '"Fecha"', '"Cliente"', '"CAE"', '"CondiciÛn"', '"Total ($)"', 
+            '"Comprobante"', '"Fecha"', '"Cliente"', '"CAE"', '"Condici√≥n"', '"Total ($)"', 
             '"Base Imponible DDJJ Rentas"', '"Impuesto DJM Rentas Mnes"', 
             '"Base imponible DJM Tasa MP"', '"Impuesto DJM Tasa MP"'
         ];
@@ -432,16 +432,16 @@
         document.getElementById('btnDownload').href = url;
     }
 
-    // NUEVA FUNCI”N: Exportar a Excel Nativo (.xlsx)
+    // NUEVA FUNCI√ìN: Exportar a Excel Nativo (.xlsx)
     function descargarExcel() {
         if (facturasProcesadas.length === 0) return;
 
         // 1. Armamos la estructura de filas para Excel
         const datosParaExcel = [
-            ["Comprobante", "Fecha", "Cliente", "CAE", "CondiciÛn", "Total ($)", "Base Imponible Rentas", "Impuesto Rentas Mnes", "Base Imponible Tasa MP", "Impuesto Tasa MP"]
+            ["Comprobante", "Fecha", "Cliente", "CAE", "Condici√≥n", "Total ($)", "Base Imponible Rentas", "Impuesto Rentas Mnes", "Base Imponible Tasa MP", "Impuesto Tasa MP"]
         ];
 
-        // 2. Insertamos los datos usando los valores NUM…RICOS (sin convertir a string)
+        // 2. Insertamos los datos usando los valores NUM√âRICOS (sin convertir a string)
         facturasProcesadas.forEach(f => {
             datosParaExcel.push([
                 f.comprobante,
@@ -449,15 +449,15 @@
                 f.cliente,
                 f.cae,
                 f.condicion,
-                f.totalNum,       // N˙mero real
-                f.baseRentasNum,  // N˙mero real
-                f.impRentasNum,   // N˙mero real
-                f.baseTasaNum,    // N˙mero real
-                f.impTasaNum      // N˙mero real
+                f.totalNum,       // N√∫mero real
+                f.baseRentasNum,  // N√∫mero real
+                f.impRentasNum,   // N√∫mero real
+                f.baseTasaNum,    // N√∫mero real
+                f.impTasaNum      // N√∫mero real
             ]);
         });
 
-        // 3. Generamos la hoja de c·lculo
+        // 3. Generamos la hoja de c√°lculo
         const hoja = XLSX.utils.aoa_to_sheet(datosParaExcel);
         
         // 4. Creamos el archivo y lo forzamos a descargar
