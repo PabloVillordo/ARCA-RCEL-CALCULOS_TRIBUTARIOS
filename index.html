@@ -14,7 +14,7 @@
             --text-muted: #94a3b8;
             --primary: #3b82f6;
             --success: #10b981;
-            --excel: #107c41; /* Verde oficial de Excel */
+            --excel: #107c41;
             --warning: #f59e0b;
             --danger: #ef4444;
             --border: #334155;
@@ -57,7 +57,14 @@
             transition: background-color 0.2s;
         }
         .file-label:hover { background-color: #2563eb; }
-        #file-name { display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+        
+        #file-name { 
+            display: block; 
+            color: var(--text-muted); 
+            font-size: 0.95rem; 
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
 
         .btn-process {
             background-color: var(--success);
@@ -69,8 +76,33 @@
             font-weight: bold;
             cursor: pointer;
             display: none;
+            margin-bottom: 1rem;
         }
         .btn-process:hover { background-color: #059669; }
+
+        /* Caja de Información AFIP */
+        .info-box {
+            background-color: rgba(59, 130, 246, 0.05);
+            border-left: 4px solid var(--primary);
+            padding: 1.2rem;
+            margin-top: 1.5rem;
+            text-align: left;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .info-box h4 {
+            color: var(--text-main);
+            margin-top: 0;
+            margin-bottom: 0.8rem;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .info-box p { margin: 0.4rem 0; }
+        .info-box strong { color: var(--text-main); }
 
         /* Dashboard Principal (Con Formato) */
         .dashboard-grid {
@@ -146,8 +178,17 @@
     <div class="upload-panel">
         <label for="fileInput" class="file-label">📁 Seleccionar CABECERA.txt</label>
         <input type="file" id="fileInput" accept=".txt" onchange="mostrarNombreArchivo()">
+        
         <span id="file-name">Ningún archivo seleccionado</span>
+        
         <button id="btnProcess" class="btn-process" onclick="procesarArchivo()">Procesar Facturas y Calcular</button>
+
+        <!-- CAJA INFORMATIVA AGREGADA -->
+        <div class="info-box">
+            <h4>ℹ️ ¿Qué es este archivo y dónde lo consigo?</h4>
+            <p><strong>¿Qué es?</strong> CABECERA.txt es el archivo que contiene el resumen de todas tus facturas emitidas (fechas, importes, CUITs y condición de tus clientes).</p>
+            <p><strong>¿De dónde bajarlo?</strong> Ingresá al portal de ARCA / AFIP ➔ <em>Comprobantes en Línea (RCEL)</em> ➔ <em>Consultas</em> ➔ Seleccioná el período ➔ Hacé clic en el botón <strong>"Exportar Duplicados Electrónicos (Todos)"</strong> al final de la lista.</p>
+        </div>
     </div>
 
     <!-- Dashboard Principal -->
@@ -221,7 +262,6 @@
             <h2>Planilla de Liquidación Detallada</h2>
             <div class="botones-descarga">
                 <a id="btnDownload" class="btn-download btn-csv" download="liquidaciones_afip.csv">📥 Descargar CSV</a>
-                <!-- NUEVO BOTÓN EXCEL -->
                 <button onclick="descargarExcel()" class="btn-download btn-excel">📊 Descargar Excel (.xlsx)</button>
             </div>
         </div>
@@ -325,7 +365,6 @@
                 totalBaseTasa += baseTasa;
                 totalImpTasa += impuestoTasa;
 
-                // Guardamos tanto los strings formateados (para HTML/CSV) como los números crudos (para Excel)
                 facturasProcesadas.push({
                     comprobante: `${ptoVta}-${nroCbte}`,
                     fecha: `${fechaRaw.substring(6,8)}/${fechaRaw.substring(4,6)}/${fechaRaw.substring(0,4)}`,
@@ -338,7 +377,6 @@
                     impRentasStr: impuestoRentas.toFixed(2).replace('.', ','),
                     baseTasaStr: baseTasa.toFixed(2).replace('.', ','),
                     impTasaStr: impuestoTasa.toFixed(2).replace('.', ','),
-                    // Valores numéricos puros para exportar correctamente a Excel
                     totalNum: importeBruto,
                     baseRentasNum: importeBruto,
                     impRentasNum: impuestoRentas,
@@ -432,16 +470,13 @@
         document.getElementById('btnDownload').href = url;
     }
 
-    // NUEVA FUNCIÓN: Exportar a Excel Nativo (.xlsx)
     function descargarExcel() {
         if (facturasProcesadas.length === 0) return;
 
-        // 1. Armamos la estructura de filas para Excel
         const datosParaExcel = [
             ["Comprobante", "Fecha", "Cliente", "CAE", "Condición", "Total ($)", "Base Imponible Rentas", "Impuesto Rentas Mnes", "Base Imponible Tasa MP", "Impuesto Tasa MP"]
         ];
 
-        // 2. Insertamos los datos usando los valores NUMÉRICOS (sin convertir a string)
         facturasProcesadas.forEach(f => {
             datosParaExcel.push([
                 f.comprobante,
@@ -449,18 +484,15 @@
                 f.cliente,
                 f.cae,
                 f.condicion,
-                f.totalNum,       // Número real
-                f.baseRentasNum,  // Número real
-                f.impRentasNum,   // Número real
-                f.baseTasaNum,    // Número real
-                f.impTasaNum      // Número real
+                f.totalNum,
+                f.baseRentasNum,
+                f.impRentasNum,
+                f.baseTasaNum,
+                f.impTasaNum
             ]);
         });
 
-        // 3. Generamos la hoja de cálculo
         const hoja = XLSX.utils.aoa_to_sheet(datosParaExcel);
-        
-        // 4. Creamos el archivo y lo forzamos a descargar
         const libro = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(libro, hoja, "Liquidaciones AFIP");
         XLSX.writeFile(libro, "liquidaciones_afip.xlsx");
