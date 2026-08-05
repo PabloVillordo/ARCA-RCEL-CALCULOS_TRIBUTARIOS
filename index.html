@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Procesador de Facturas AFIP + Cálculo Tributario</title>
+    <title>Conversor de Facturas AFIP a Excel/CSV</title>
     <!-- Librería SheetJS para exportar a Excel nativo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -254,6 +254,10 @@
             <h3>Copiar Imp. Tasa</h3>
             <div class="raw-text" id="raw-imp-tasa" title="Clic para copiar">0,00</div>
         </div>
+		<div class="card">
+            <h3>👁️ Visitas Totales</h3>
+            <div class="value" id="kpi-visitas" style="color: var(--success);">...</div>
+        </div>
     </div>
 
     <!-- Resultados y Tabla -->
@@ -497,6 +501,30 @@
         XLSX.utils.book_append_sheet(libro, hoja, "Liquidaciones AFIP");
         XLSX.writeFile(libro, "liquidaciones_afip.xlsx");
     }
+// ==========================================
+    // SISTEMA DE CONTADOR DE VISITAS GLOBAL
+    // ==========================================
+    function registrarVisita() {
+        // Cambiá este texto por un ID único para tu aplicación
+        const namespace = 'RECELARCA';
+        const key = 'visitas_app_afip';
+        
+        // La URL hace un request que suma +1 ("up") automáticamente en la base de datos
+        const url = `https://api.counterapi.dev/v1/${namespace}/${key}/up`;
+
+        fetch(url)
+            .then(respuesta => respuesta.json())
+            .then(datos => {
+                // Actualiza el número en la tarjeta del dashboard
+                document.getElementById('kpi-visitas').innerText = datos.count;
+            })
+            .catch(error => {
+                console.log('Error al cargar el contador:', error);
+                document.getElementById('kpi-visitas').innerText = "-";
+            });
+    }
+// Ejecutar el contador apenas se abre la página
+    window.addEventListener('load', registrarVisita);
 </script>
 </body>
 </html>
