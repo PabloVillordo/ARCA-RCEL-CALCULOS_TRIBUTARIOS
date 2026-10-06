@@ -1,0 +1,372 @@
+/* ========================================== */
+/* VARIABLES GLOBALES CSS                     */
+/* ========================================== */
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #3b82f6;
+    --success: #10b981;
+    --excel: #107c41;
+    --excel-legacy: #1d6f42;
+    --ods: #d97706;
+    --txt: #475569;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --border: #334155;
+    --highlight: #8b5cf6;
+}
+
+/* ========================================== */
+/* ESTILOS BASE Y MAQUETACIÓN                 */
+/* ========================================== */
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 2rem;
+}
+
+.container { 
+    max-width: 1500px; 
+    margin: 0 auto; 
+}
+
+h1 { 
+    margin-bottom: 0.5rem; 
+    font-size: 1.8rem; 
+}
+
+p.subtitle { 
+    color: var(--text-muted); 
+    margin-bottom: 2rem; 
+}
+
+/* ========================================== */
+/* PANEL DE CARGA DE ARCHIVO                  */
+/* ========================================== */
+.upload-panel {
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 2px dashed var(--border);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+input[type="file"] { 
+    display: none; 
+}
+
+.file-label {
+    background-color: var(--primary);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-block;
+    margin-bottom: 1rem;
+    transition: background-color 0.2s;
+}
+
+.file-label:hover { 
+    background-color: #2563eb; 
+}
+
+#file-name { 
+    display: block; 
+    color: var(--text-muted); 
+    font-size: 0.95rem; 
+    margin-bottom: 1rem; 
+    font-weight: bold;
+}
+
+.btn-process {
+    background-color: var(--success); 
+    color: white; 
+    padding: 0.8rem 2rem; 
+    border: none;
+    border-radius: 6px; 
+    font-size: 1rem; 
+    font-weight: bold; 
+    cursor: pointer;
+    display: none; 
+    margin-bottom: 1rem;
+}
+
+.btn-process:hover { 
+    background-color: #059669; 
+}
+
+/* ========================================== */
+/* CAJA INFORMATIVA DE AYUDA (HELP BOX)       */
+/* ========================================== */
+.info-box {
+    background-color: rgba(59, 130, 246, 0.05);
+    border-left: 4px solid var(--primary);
+    padding: 1.2rem; 
+    margin-top: 1.5rem; 
+    text-align: left;
+    border-radius: 0 6px 6px 0; 
+    font-size: 0.9rem; 
+    color: var(--text-muted); 
+    line-height: 1.5;
+}
+
+.info-box h4 {
+    color: var(--text-main); 
+    margin-top: 0; 
+    margin-bottom: 0.8rem; 
+    font-size: 1.05rem; 
+    display: flex; 
+    align-items: center; 
+    gap: 0.5rem;
+}
+
+.info-box p { 
+    margin: 0.4rem 0; 
+}
+
+.info-box strong { 
+    color: var(--text-main); 
+}
+
+/* ========================================== */
+/* DASHBOARDS KPI Y VALORES CRUDOS            */
+/* ========================================== */
+.dashboard-grid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.2rem; 
+    margin-bottom: 1rem;
+}
+
+.card { 
+    background-color: var(--card-bg); 
+    padding: 1.2rem; 
+    border-radius: 12px; 
+    border: 1px solid var(--border); 
+}
+
+.card h3 { 
+    margin: 0 0 0.5rem 0; 
+    font-size: 0.8rem; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+}
+
+.card .value { 
+    font-size: 1.5rem; 
+    font-weight: bold; 
+    color: #38bdf8; 
+}
+
+.card .value.value-main { 
+    color: var(--text-main); 
+}
+
+.card .value.impuesto { 
+    color: var(--warning); 
+}
+
+.card .value.separado { 
+    color: var(--highlight); 
+}
+
+.dashboard-raw {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+    gap: 1.2rem; 
+    margin-bottom: 2rem;
+}
+
+.card-raw { 
+    background-color: #080c17; 
+    padding: 1rem; 
+    border-radius: 12px; 
+    border: 1px dashed var(--text-muted); 
+    text-align: center; 
+}
+
+.card-raw h3 { 
+    margin: 0 0 0.5rem 0; 
+    font-size: 0.75rem; 
+    color: var(--text-muted); 
+}
+
+.raw-text {
+    font-size: 1.2rem; 
+    font-family: monospace; 
+    color: var(--success); 
+    background-color: rgba(16, 185, 129, 0.1);
+    padding: 0.3rem; 
+    border-radius: 6px; 
+    user-select: all; 
+    cursor: copy; 
+    display: inline-block;
+}
+
+.raw-text:active { 
+    background-color: var(--success); 
+    color: white; 
+}
+
+.section-title {
+    display: block; 
+    font-size: 1.1rem; 
+    color: var(--text-muted); 
+    margin-bottom: 1rem; 
+    margin-top: 0;
+    border-bottom: 1px solid var(--border); 
+    padding-bottom: 0.5rem;
+}
+
+/* ========================================== */
+/* RESULTADOS, BOTONES DE DESCARGA Y TABLA    */
+/* ========================================== */
+.results-section { 
+    display: block; 
+    margin-top: 2rem; 
+}
+
+.header-results { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 1rem; 
+    flex-wrap: wrap; 
+    gap: 1rem;
+}
+
+.botones-descarga { 
+    display: flex; 
+    gap: 0.6rem; 
+    flex-wrap: wrap; 
+}
+
+.btn-download {
+    color: white; 
+    padding: 0.6rem 1rem; 
+    border-radius: 6px; 
+    text-decoration: none; 
+    font-weight: bold; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 0.85rem; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 0.3rem;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn-download:hover { 
+    opacity: 0.9; 
+    transform: translateY(-1px); 
+}
+
+.btn-csv { background-color: var(--success); }
+.btn-xlsx { background-color: var(--excel); }
+.btn-xls { background-color: var(--excel-legacy); }
+.btn-ods { background-color: var(--ods); }
+.btn-txt { background-color: var(--txt); }
+
+.table-container { 
+    background-color: var(--card-bg); 
+    border-radius: 12px; 
+    border: 1px solid var(--border); 
+    overflow-x: auto; 
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    text-align: left; 
+    min-width: 1350px; 
+}
+
+th, td { 
+    padding: 0.8rem 1rem; 
+    border-bottom: 1px solid var(--border); 
+    white-space: nowrap; 
+}
+
+th { 
+    background-color: #151f32; 
+    color: var(--text-muted); 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+}
+
+tr:last-child td { 
+    border-bottom: none; 
+}
+
+.monto { 
+    font-family: monospace; 
+    font-size: 0.95rem; 
+    text-align: right;
+}
+
+.col-calc { 
+    background-color: rgba(59, 130, 246, 0.05); 
+}
+
+.text-right {
+    text-align: right;
+}
+
+.table-empty-msg {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem;
+}
+
+/* Estilos de Notas de Crédito y Badges */
+tr.fila-nc { 
+    background-color: rgba(239, 68, 68, 0.04); 
+}
+
+.monto-negativo { 
+    color: var(--danger) !important; 
+    font-weight: bold; 
+}
+
+.badge-cond { 
+    font-size: 0.75rem; 
+    padding: 0.2rem 0.5rem; 
+    border-radius: 4px; 
+    font-weight: bold; 
+}
+
+.bg-cf { 
+    background-color: #3b82f6; 
+    color: white; 
+}
+
+.bg-ins { 
+    background-color: #8b5cf6; 
+    color: white; 
+}
+
+.badge-code { 
+    font-family: monospace; 
+    font-weight: bold; 
+    color: #38bdf8; 
+    background-color: rgba(56, 189, 248, 0.1); 
+    padding: 0.2rem 0.5rem; 
+    border-radius: 4px; 
+}
+
+.badge-tipo { 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    color: var(--text-main); 
+}
+
+.badge-nc { 
+    color: var(--danger); 
+    font-weight: bold; 
+}

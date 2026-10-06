@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Declaración del estándar HTML5. -->
 <html lang="es">
 <head>
     <!-- ========================================== -->
@@ -7,12 +6,16 @@
     <!-- ========================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversor de Facturas AFIP a Excel/CSV</title>
+    <title>Conversor de Facturas AFIP a Excel/CSV/ODS/TXT</title>
+
+    <!-- Enlaces PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
     <!-- ========================================== -->
     <!-- GOOGLE ANALYTICS (SEGUIMIENTO DE USUARIOS) -->
     <!-- ========================================== -->
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2SBDMT0D77"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -22,168 +25,26 @@
     </script>
 
     <!-- ========================================== -->
-    <!-- LIBRERÍAS EXTERNAS                         -->
+    <!-- LIBRERÍAS EXTERNAS Y ESTILOS               -->
     <!-- ========================================== -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- ========================================== -->
-    <!-- ESTILOS CSS (DISEÑO Y APARIENCIA)          -->
-    <!-- ========================================== -->
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #3b82f6;
-            --success: #10b981;
-            --excel: #107c41;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --border: #334155;
-            --highlight: #8b5cf6;
-        }
-
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 2rem;
-        }
-
-        .container { max-width: 1400px; margin: 0 auto; }
-        h1 { margin-bottom: 0.5rem; font-size: 1.8rem; }
-        p.subtitle { color: var(--text-muted); margin-bottom: 2rem; }
-
-        /* --- Panel de Carga --- */
-        .upload-panel {
-            background-color: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
-            border: 2px dashed var(--border);
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        input[type="file"] { display: none; }
-
-        .file-label {
-            background-color: var(--primary);
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-block;
-            margin-bottom: 1rem;
-            transition: background-color 0.2s;
-        }
-        .file-label:hover { background-color: #2563eb; }
-        
-        #file-name { 
-            display: block; color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem; font-weight: bold;
-        }
-
-        .btn-process {
-            background-color: var(--success); color: white; padding: 0.8rem 2rem; border: none;
-            border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer;
-            display: none; margin-bottom: 1rem;
-        }
-        .btn-process:hover { background-color: #059669; }
-
-        .info-box {
-            background-color: rgba(59, 130, 246, 0.05);
-            border-left: 4px solid var(--primary);
-            padding: 1.2rem; margin-top: 1.5rem; text-align: left;
-            border-radius: 0 6px 6px 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;
-        }
-        .info-box h4 {
-            color: var(--text-main); margin-top: 0; margin-bottom: 0.8rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;
-        }
-        .info-box p { margin: 0.4rem 0; }
-        .info-box strong { color: var(--text-main); }
-
-        /* --- Dashboards (AHORA VISIBLES DESDE EL INICIO) --- */
-        .dashboard-grid {
-            display: grid; /* Cambiado de none a grid */
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 1.2rem; margin-bottom: 1rem;
-        }
-
-        .card { background-color: var(--card-bg); padding: 1.2rem; border-radius: 12px; border: 1px solid var(--border); }
-        .card h3 { margin: 0 0 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
-        .card .value { font-size: 1.5rem; font-weight: bold; color: #38bdf8; }
-        .card .value.impuesto { color: var(--warning); }
-        .card .value.separado { color: var(--highlight); }
-
-        .dashboard-raw {
-            display: grid; /* Cambiado de none a grid */
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.2rem; margin-bottom: 2rem;
-        }
-        .card-raw { background-color: #080c17; padding: 1rem; border-radius: 12px; border: 1px dashed var(--text-muted); text-align: center; }
-        .card-raw h3 { margin: 0 0 0.5rem 0; font-size: 0.75rem; color: var(--text-muted); }
-        
-        .raw-text {
-            font-size: 1.2rem; font-family: monospace; color: var(--success); background-color: rgba(16, 185, 129, 0.1);
-            padding: 0.3rem; border-radius: 6px; user-select: all; cursor: copy; display: inline-block;
-        }
-        .raw-text:active { background-color: var(--success); color: white; }
-
-        .section-title {
-            display: block; /* Cambiado de none a block */
-            font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem; margin-top: 0;
-            border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
-        }
-
-        /* --- Tabla y Resultados (AHORA VISIBLES DESDE EL INICIO) --- */
-        .results-section { 
-            display: block; /* Cambiado de none a block */
-            margin-top: 2rem;
-        }
-        .header-results { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;}
-        
-        .botones-descarga { display: flex; gap: 0.8rem; }
-
-        .btn-download {
-            color: white; padding: 0.6rem 1.2rem; border-radius: 6px; text-decoration: none; font-weight: bold; 
-            border: none; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center;
-        }
-        .btn-csv { background-color: var(--success); }
-        .btn-csv:hover { background-color: #059669; }
-        .btn-excel { background-color: var(--excel); }
-        .btn-excel:hover { background-color: #0c5e31; }
-
-        .table-container { background-color: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 1200px; }
-        th, td { padding: 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
-        th { background-color: #151f32; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
-        tr:last-child td { border-bottom: none; }
-        
-        .monto { font-family: monospace; font-size: 0.95rem; text-align: right;}
-        .col-calc { background-color: rgba(59, 130, 246, 0.05); }
-        
-        .badge-cond { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; }
-        .bg-cf { background-color: #3b82f6; color: white; }
-        .bg-ins { background-color: #8b5cf6; color: white; }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Script Principal con defer -->
+    <script src="js/script.js" defer></script>
 </head>
 <body>
 
-<!-- ========================================== -->
-<!-- ESTRUCTURA VISUAL (HTML BODY)              -->
-<!-- ========================================== -->
 <div class="container">
     <h1>Procesador de Facturas AFIP + Cálculo Tributario</h1>
     <p class="subtitle">Automatiza la extracción de datos y calcula tus liquidaciones al instante.</p>
 
+    <!-- Panel de Carga de Archivo -->
     <div class="upload-panel">
         <label for="fileInput" class="file-label">📁 Seleccionar CABECERA.txt</label>
-        <input type="file" id="fileInput" accept=".txt" onchange="mostrarNombreArchivo()">
-        
+        <input type="file" id="fileInput" accept=".txt">
         <span id="file-name">Ningún archivo seleccionado</span>
-        
-        <button id="btnProcess" class="btn-process" onclick="procesarArchivo()">Procesar Facturas y Calcular</button>
+        <button id="btnProcess" class="btn-process">Procesar Facturas y Calcular</button>
 
         <div class="info-box">
             <h4>ℹ️ ¿Qué es este archivo y dónde lo consigo?</h4>
@@ -192,14 +53,14 @@
         </div>
     </div>
 
-    <!-- Dashboard 1: Inicializado en 0 -->
+    <!-- Dashboards KPI -->
     <div class="dashboard-grid" id="dashboard">
         <div class="card">
-            <h3>Cant. Facturas</h3>
-            <div class="value" id="kpi-cantidad" style="color: var(--text-main);">0</div>
+            <h3>Cant. Comprobantes</h3>
+            <div class="value value-main" id="kpi-cantidad">0</div>
         </div>
         <div class="card">
-            <h3>Total Facturado</h3>
+            <h3>Total Neto Facturado</h3>
             <div class="value" id="kpi-monto">0,00</div>
         </div>
         <div class="card">
@@ -224,7 +85,7 @@
         </div>
     </div>
 
-    <!-- Dashboard 2: Inicializado en 0 -->
+    <!-- Dashboard Crudo -->
     <h2 class="section-title" id="titulo-crudos">📋 Valores crudos listos para copiar y pegar (Clickeá el número)</h2>
     <div class="dashboard-raw" id="dashboard-raw">
         <div class="card-raw">
@@ -257,36 +118,39 @@
         </div>
     </div>
 
-    <!-- Sección de Resultados (Botones y Tabla) -->
+    <!-- Tabla de Resultados y Botones -->
     <div class="results-section" id="results">
         <div class="header-results">
             <h2>Planilla de Liquidación Detallada</h2>
             <div class="botones-descarga">
-                <!-- Se agregó onclick="descargarCSV(event)" para validar que haya datos antes de bajar -->
-                <a id="btnDownload" href="#" class="btn-download btn-csv" onclick="descargarCSV(event)">📥 Descargar CSV</a>
-                <button onclick="descargarExcel()" class="btn-download btn-excel">📊 Descargar Excel (.xlsx)</button>
+                <a id="btnDownload" href="#" download="liquidaciones_afip.csv" class="btn-download btn-csv">📥 CSV</a>
+                <button id="btnXLSX" class="btn-download btn-xlsx">📊 Excel (.xlsx)</button>
+                <button id="btnXLS" class="btn-download btn-xls">📈 Excel (.xls)</button>
+                <button id="btnODS" class="btn-download btn-ods">📄 Calc (.ods)</button>
+                <button id="btnTXT" class="btn-download btn-txt">📝 Texto (.txt)</button>
             </div>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Comprobante</th>
+                        <th>Código</th>
+                        <th>Tipo de Comprobante</th>
+                        <th>Número</th>
                         <th>Fecha</th>
                         <th>Cliente</th>
                         <th>CAE</th>
                         <th>Condición</th>
-                        <th style="text-align: right;">Total ($)</th>
-                        <th class="col-calc" style="text-align: right;">Base Imp. Rentas</th>
-                        <th class="col-calc" style="text-align: right;">Imp. Rentas Mnes</th>
-                        <th class="col-calc" style="text-align: right;">Base Tasa MP</th>
-                        <th class="col-calc" style="text-align: right;">Imp. Tasa MP</th>
+                        <th class="text-right">Total ($)</th>
+                        <th class="col-calc text-right">Base Imp. Rentas</th>
+                        <th class="col-calc text-right">Imp. Rentas Mnes</th>
+                        <th class="col-calc text-right">Base Tasa MP</th>
+                        <th class="col-calc text-right">Imp. Tasa MP</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <!-- Fila de estado vacío inicial -->
                     <tr>
-                        <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                        <td colspan="12" class="table-empty-msg">
                             Esperando archivo CABECERA.txt...
                         </td>
                     </tr>
@@ -296,215 +160,5 @@
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- LÓGICA DE PROGRAMACIÓN (JAVASCRIPT)        -->
-<!-- ========================================== -->
-<script>
-    let facturasProcesadas = [];
-    let csvContenido = "";
-    let blobUrlCSV = "";
-
-    function mostrarNombreArchivo() {
-        const input = document.getElementById('fileInput');
-        const fileNameDisplay = document.getElementById('file-name');
-        const btnProcess = document.getElementById('btnProcess');
-        
-        if (input.files.length > 0) {
-            fileNameDisplay.innerText = "Archivo seleccionado: " + input.files[0].name;
-            btnProcess.style.display = "inline-block"; 
-        } else {
-            fileNameDisplay.innerText = "Ningún archivo seleccionado";
-            btnProcess.style.display = "none";
-        }
-    }
-
-    function procesarArchivo() {
-        const input = document.getElementById('fileInput');
-        if (input.files.length === 0) return;
-
-        const archivo = input.files[0];
-        const lector = new FileReader();
-
-        lector.onload = function(evento) {
-            const contenido = evento.target.result;
-            analizarTextoAFIP(contenido); 
-        };
-
-        lector.readAsText(archivo, "UTF-8");
-    }
-
-    function analizarTextoAFIP(texto) {
-        facturasProcesadas = []; 
-        
-        let totalMonto = 0;
-        let totalBaseRentasCF = 0;
-        let totalBaseRentasINS = 0;
-        let totalImpRentas = 0;
-        let totalBaseTasa = 0;
-        let totalImpTasa = 0;
-        
-        const lineas = texto.split(/\r?\n/);
-
-        lineas.forEach(linea => {
-            if (linea.startsWith('1') && !linea.startsWith('11')) {
-                if(linea.length < 274) return; 
-
-                const fechaRaw = linea.substring(1, 9);
-                const ptoVta = linea.substring(12, 16);
-                const nroCbte = linea.substring(16, 24);
-                const docTipo = linea.substring(35, 37); 
-                const cliente = linea.substring(48, 78).trim(); 
-                const cae = linea.substring(260, 274);
-                
-                const importeBruto = parseFloat(linea.substring(78, 93)) / 100;
-                
-                let esInscripto = (docTipo === '80');
-                let condicionNombre = esInscripto ? 'INSCRIPTO' : 'C. FINAL';
-
-                if (esInscripto) {
-                    totalBaseRentasINS += importeBruto;
-                } else {
-                    totalBaseRentasCF += importeBruto;
-                }
-                
-                const impuestoRentas = importeBruto * 0.045; 
-                const baseTasa = importeBruto - impuestoRentas; 
-                const impuestoTasa = baseTasa * 0.01; 
-
-                totalMonto += importeBruto;
-                totalImpRentas += impuestoRentas;
-                totalBaseTasa += baseTasa;
-                totalImpTasa += impuestoTasa;
-
-                facturasProcesadas.push({
-                    comprobante: `${ptoVta}-${nroCbte}`,
-                    fecha: `${fechaRaw.substring(6,8)}/${fechaRaw.substring(4,6)}/${fechaRaw.substring(0,4)}`,
-                    cliente: cliente,
-                    cae: cae,
-                    condicion: condicionNombre,
-                    esInscripto: esInscripto,
-                    totalStr: importeBruto.toFixed(2).replace('.', ','),
-                    baseRentasStr: importeBruto.toFixed(2).replace('.', ','),
-                    impRentasStr: impuestoRentas.toFixed(2).replace('.', ','),
-                    baseTasaStr: baseTasa.toFixed(2).replace('.', ','),
-                    impTasaStr: impuestoTasa.toFixed(2).replace('.', ','),
-                    totalNum: importeBruto,
-                    baseRentasNum: importeBruto,
-                    impRentasNum: impuestoRentas,
-                    baseTasaNum: baseTasa,
-                    impTasaNum: impuestoTasa
-                });
-            }
-        });
-
-        actualizarUI(totalMonto, totalBaseRentasCF, totalBaseRentasINS, totalImpRentas, totalBaseTasa, totalImpTasa);
-        prepararCSV(); 
-    }
-
-    // --- FUNCIONES DE FORMATEO ---
-    function fMoneda(valor) {
-        return '$' + valor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function fCrudo(valor) {
-        return valor.toFixed(2).replace('.', ',');
-    }
-    function fAnglo(valor) {
-        return valor.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
-    }
-
-    function actualizarUI(monto, bRentasCF, bRentasINS, iRentas, bTasa, iTasa) {
-        document.getElementById('kpi-cantidad').innerText = facturasProcesadas.length;
-        document.getElementById('kpi-monto').innerText = fMoneda(monto);
-        document.getElementById('kpi-base-rentas-cf').innerText = fMoneda(bRentasCF);
-        document.getElementById('kpi-base-rentas-ins').innerText = fMoneda(bRentasINS);
-        document.getElementById('kpi-imp-rentas').innerText = fMoneda(iRentas);
-        document.getElementById('kpi-base-tasa').innerText = fMoneda(bTasa);
-        document.getElementById('kpi-imp-tasa').innerText = fMoneda(iTasa);
-
-        document.getElementById('raw-cantidad').innerText = facturasProcesadas.length;
-        document.getElementById('raw-monto').innerText = fCrudo(monto);
-        document.getElementById('raw-base-rentas-cf').innerText = fCrudo(bRentasCF);
-        document.getElementById('raw-base-rentas-ins').innerText = fCrudo(bRentasINS);
-        document.getElementById('raw-imp-rentas').innerText = fCrudo(iRentas);
-        document.getElementById('raw-base-tasa').innerText = fAnglo(bTasa);
-        document.getElementById('raw-imp-tasa').innerText = fCrudo(iTasa);
-
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = ''; 
-
-        facturasProcesadas.forEach(f => {
-            const tr = document.createElement('tr');
-            const badge = f.esInscripto ? `<span class="badge-cond bg-ins">INSCRIPTO</span>` : `<span class="badge-cond bg-cf">C. FINAL</span>`;
-            
-            tr.innerHTML = `
-                <td><strong>${f.comprobante}</strong></td>
-                <td>${f.fecha}</td>
-                <td>${f.cliente}</td>
-                <td>${f.cae}</td>
-                <td>${badge}</td>
-                <td class="monto">$ ${f.totalStr}</td>
-                <td class="monto col-calc">$ ${f.baseRentasStr}</td>
-                <td class="monto col-calc" style="color: var(--warning);">$ ${f.impRentasStr}</td>
-                <td class="monto col-calc">$ ${f.baseTasaStr}</td>
-                <td class="monto col-calc" style="color: var(--warning);">$ ${f.impTasaStr}</td>
-            `;
-            tbody.appendChild(tr); 
-        });
-    }
-
-    function prepararCSV() {
-        const cabeceras = [
-            '"Comprobante"', '"Fecha"', '"Cliente"', '"CAE"', '"Condición"', '"Total ($)"', 
-            '"Base Imponible DDJJ Rentas"', '"Impuesto DJM Rentas Mnes"', 
-            '"Base imponible DJM Tasa MP"', '"Impuesto DJM Tasa MP"'
-        ];
-        csvContenido = cabeceras.join(';') + '\r\n'; 
-
-        facturasProcesadas.forEach(f => {
-            const fila = [
-                `"${f.comprobante}"`, `"${f.fecha}"`, `"${f.cliente}"`, `"${f.cae}"`,
-                `"${f.condicion}"`,
-                `"${f.totalStr}"`, `"${f.baseRentasStr}"`, `"${f.impRentasStr}"`,
-                `"${f.baseTasaStr}"`, `"${f.impTasaStr}"`
-            ];
-            csvContenido += fila.join(';') + '\r\n';
-        });
-
-        const blob = new Blob(["\uFEFF" + csvContenido], { type: 'text/csv;charset=utf-8;' });
-        blobUrlCSV = URL.createObjectURL(blob); 
-        document.getElementById('btnDownload').href = blobUrlCSV; 
-    }
-
-    // Validación para el botón CSV si se presiona sin subir datos
-    function descargarCSV(evento) {
-        if (facturasProcesadas.length === 0) {
-            evento.preventDefault();
-            alert("⚠️ Primero tenés que seleccionar y procesar un archivo CABECERA.txt para poder descargar los datos.");
-        }
-    }
-
-    function descargarExcel() {
-        if (facturasProcesadas.length === 0) {
-            alert("⚠️ Primero tenés que seleccionar y procesar un archivo CABECERA.txt para poder descargar los datos.");
-            return;
-        }
-
-        const datosParaExcel = [
-            ["Comprobante", "Fecha", "Cliente", "CAE", "Condición", "Total ($)", "Base Imponible Rentas", "Impuesto Rentas Mnes", "Base Imponible Tasa MP", "Impuesto Tasa MP"]
-        ];
-
-        facturasProcesadas.forEach(f => {
-            datosParaExcel.push([
-                f.comprobante, f.fecha, f.cliente, f.cae, f.condicion,
-                f.totalNum, f.baseRentasNum, f.impRentasNum, f.baseTasaNum, f.impTasaNum
-            ]);
-        });
-
-        const hoja = XLSX.utils.aoa_to_sheet(datosParaExcel);
-        const libro = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(libro, hoja, "Liquidaciones AFIP");
-        XLSX.writeFile(libro, "liquidaciones_afip.xlsx");
-    }
-</script>
 </body>
 </html>
